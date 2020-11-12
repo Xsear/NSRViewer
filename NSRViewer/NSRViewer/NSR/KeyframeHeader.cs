@@ -29,6 +29,12 @@ namespace NSRViewer.NSR
         [DisplayName("Data Count")]
         public byte DataCount { get; set; }
 
+        [DisplayName("UNK2")]
+        public byte Unk2 { get; set; }
+
+        [DisplayName("UNK3")]
+        public byte Unk3 { get; set; }
+
         [DisplayName("Data"), Description("Raw data for the keyframe")]
         public byte[] Data { get; set; }
 
