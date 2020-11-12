@@ -61,6 +61,7 @@
             this.CopyInfoBtn = new System.Windows.Forms.Button();
             this.ViewGhostsBtn = new System.Windows.Forms.Button();
             this.ViewInFirefallBtn = new System.Windows.Forms.Button();
+            this.ExportFaucapBtn = new System.Windows.Forms.Button();
             this.ReplayFileItemContextMenu.SuspendLayout();
             this.InformationGroupBox.SuspendLayout();
             this.SuspendLayout();
@@ -392,7 +393,7 @@
             this.ViewGhostsBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.ViewGhostsBtn.Location = new System.Drawing.Point(193, 467);
             this.ViewGhostsBtn.Name = "ViewGhostsBtn";
-            this.ViewGhostsBtn.Size = new System.Drawing.Size(200, 25);
+            this.ViewGhostsBtn.Size = new System.Drawing.Size(105, 25);
             this.ViewGhostsBtn.TabIndex = 6;
             this.ViewGhostsBtn.Text = "GHOSTS";
             this.ViewGhostsBtn.UseVisualStyleBackColor = true;
@@ -410,11 +411,24 @@
             this.ViewInFirefallBtn.UseVisualStyleBackColor = true;
             this.ViewInFirefallBtn.Click += new System.EventHandler(this.ViewInFirefallBtn_Click);
             // 
+            // ExportFaucapBtn
+            // 
+            this.ExportFaucapBtn.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.ExportFaucapBtn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.ExportFaucapBtn.Location = new System.Drawing.Point(304, 467);
+            this.ExportFaucapBtn.Name = "ExportFaucapBtn";
+            this.ExportFaucapBtn.Size = new System.Drawing.Size(89, 25);
+            this.ExportFaucapBtn.TabIndex = 8;
+            this.ExportFaucapBtn.Text = "FAUCAP";
+            this.ExportFaucapBtn.UseVisualStyleBackColor = true;
+            this.ExportFaucapBtn.Click += new System.EventHandler(this.ExportFaucap_Click);
+            // 
             // Viewer
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.ClientSize = new System.Drawing.Size(718, 501);
+            this.Controls.Add(this.ExportFaucapBtn);
             this.Controls.Add(this.ViewInFirefallBtn);
             this.Controls.Add(this.ViewGhostsBtn);
             this.Controls.Add(this.CopyInfoBtn);
@@ -470,6 +484,7 @@
         private System.Windows.Forms.ToolStripMenuItem OpenInFileExplorerToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator ReplayContextToolStripSeparator;
         private System.Windows.Forms.ToolStripMenuItem SearchFilesToolStripMenuItem;
+        private System.Windows.Forms.Button ExportFaucapBtn;
     }
 }
 

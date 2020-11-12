@@ -5,6 +5,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.IO;
 using System.IO.Compression;
+using NSRViewer.NSR;
 
 namespace NSRViewer
 {
@@ -460,5 +461,138 @@ namespace NSRViewer
             Searcher searchForm = new Searcher();
             searchForm.ShowDialog(this);
         }
+
+        private void ExportFaucap_Click(object sender, EventArgs e)
+        {
+            // Mixing the ghosts code with the export code for the setup
+
+
+            if (ReplayFileListBox.SelectedIndex <= -1)
+            {
+                return;
+            }
+
+            SaveFileDialog saveFileDialog = new SaveFileDialog
+            {
+                Filter = "Faucap Files (*.faucap)|*.faucap",
+                FileName = Path.GetFileNameWithoutExtension(ReplayFileListBox.SelectedItem.ToString()) + ".faucap"
+            };
+
+            if (saveFileDialog.ShowDialog() != DialogResult.OK)
+            {
+                return;
+            }
+
+            // Full Load NSR
+            byte[] compressedFile = File.ReadAllBytes(ReplayFileListBox.SelectedItem.ToString()); // loads compressed size into memory
+            byte[] decompressedBytes = Decompress(compressedFile); // loads raw size 2x into memory
+
+            // Done using compressed data now
+            compressedFile = null;
+
+            using (MemoryStream decompressedStream = new MemoryStream(decompressedBytes))
+            using (BinaryReader decompressedReader = new BinaryReader(decompressedStream, Encoding.UTF8))
+            {
+                NSR.NSR nsrFile = new NSR.NSR();
+                if (LoadNSR(decompressedReader, ref nsrFile) == false) // loads raw size 2x into memory
+                {
+                    MessageBox.Show("Error loading Network Stream Replay.");
+                }
+                else
+                {
+                    // begin decompressed cleanup, they aren't going to be used again and are storing a lot of memory
+                    decompressedReader.Dispose();
+                    decompressedStream.Dispose();
+                    decompressedBytes = null;
+
+                    // Time to do our faucap stuff here
+                    string fakeRemoteIp = "10.0.0.0";
+                    string fakeLocalIp = "10.0.0.1";
+                    ushort fakeMatrixPort = 25000;
+                    uint protocolVersion = nsrFile.DescriptionHeader.ProtocolVersion;
+                    uint fakeSocketId = 1;
+                    ushort fakeStreamingProtocol = 1; // need to lookup realistic value
+                    ushort fakeSequenceStart = 1000;
+                    ushort fakeGameServerPort = 25001;
+                    uint sessionCount = 1;
+
+                    bool fromServer = true;
+
+                    using (FileStream fs = new FileStream(saveFileDialog.FileName, FileMode.Create, FileAccess.Write))
+                    using (BinaryWriter bw = new BinaryWriter(fs))
+                    {
+                        bw.Write("FCAP");
+                        bw.Write(sessionCount);
+                        bw.Write(fakeRemoteIp);
+                        bw.Write(fakeLocalIp);
+                        bw.Write(fakeMatrixPort);
+                        bw.Write(protocolVersion); // should be big endian but ends up little?
+                        bw.Write(fakeSocketId);
+                        bw.Write(fakeStreamingProtocol);
+                        bw.Write(fakeSequenceStart);
+                        bw.Write(fakeGameServerPort);
+
+                        bw.Write((Int32)nsrFile.KeyframeHeaders.Count);
+                        foreach (KeyframeHeader k in nsrFile.KeyframeHeaders)
+                        {
+                            // FCAP Time
+                            bw.Write(k.KeyframePosition); // Could probably do something better here
+
+                            // FCAP Server/Client Bool
+                            bw.Write(fromServer);
+                            
+                            // Note: We are treating all the ghost frames as UGSS messages. It's possible that k.Unk0 is channel though.
+                            // FCAP Data Length
+                            bw.Write((ushort)(4 + 2 + 2 + 9 + k.Data.Length)); // Adding length for the additional stuff we're adding below
+
+                            // Begin FCAP Data
+                            // Packet header / socket id
+                            bw.Write(fakeSocketId);
+
+                            // Message header, big endian byte order
+                            ushort header = GenerateMessageHeader(3, 0, false, (ushort)(2 + 2 + 9 + k.Data.Length));
+                            byte[] headerBytes = BitConverter.GetBytes(header);
+                            bw.Write(headerBytes[1]);
+                            bw.Write(headerBytes[0]);
+
+                            // Seq num, big endian byte order
+                            ushort seq = (ushort)nsrFile.KeyframeHeaders.Count; // Not sure if we have the actual seqnum, but we don't have any ack messages regardless.
+                            byte[] seqBytes = BitConverter.GetBytes(seq);
+                            bw.Write(seqBytes[1]);
+                            bw.Write(seqBytes[0]);
+
+                            // GSS Message header
+                            bw.Write(k.Id); // Entity id
+                            bw.Write(k.DataType); // Message id
+
+                            // Message
+                            bw.Write(k.Data);
+
+                            // End data
+                        }
+
+                        
+                    }
+
+                    // release NSR resources
+                    nsrFile = null;
+
+                    
+                }
+            }
+            MessageBox.Show("Export Complete.", "Export Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            // This doesn't happen often so should be safe to force now
+            GC.Collect(2);
+        }
+
+        // just joinked it from PIN
+        private ushort GenerateMessageHeader(byte channel, byte resendCount, bool isSplit, ushort len)
+        {
+            return  (ushort)(((((byte)channel) & 0b11) << 14) |
+                                    ((resendCount & 0b11) << 12) |
+                                    ((isSplit ? 1 : 0) << 11) |
+                                    (len & 0x07FF));
+        } 
     }
 }
